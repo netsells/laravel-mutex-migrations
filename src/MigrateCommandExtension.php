@@ -12,8 +12,6 @@ use Symfony\Component\Console\Input\InputOption;
 
 class MigrateCommandExtension extends MigrateCommand implements SignalableCommandInterface
 {
-    private const OPTION_DOWN = 'down';
-
     private const OPTION_MUTEX = 'mutex';
 
     private MigrationProcessorInterface $processor;
@@ -41,18 +39,13 @@ class MigrateCommandExtension extends MigrateCommand implements SignalableComman
 
             return self::FAILURE;
         } finally {
-            $this->processor->terminate(isset($th));
+            $this->processor->terminate();
         }
     }
 
     private function createProcessor(): MigrationProcessorInterface
     {
-        return $this->factory->create(
-            $this->option(self::OPTION_MUTEX),
-            $this->option(self::OPTION_DOWN),
-            $this,
-            $this->components
-        );
+        return $this->factory->create($this->components, $this->option(self::OPTION_MUTEX));
     }
 
     public function getSubscribedSignals(): array
@@ -62,7 +55,7 @@ class MigrateCommandExtension extends MigrateCommand implements SignalableComman
 
     public function handleSignal(int $signal): void
     {
-        $this->processor->terminate(false);
+        $this->processor->terminate();
     }
 
     private function extendSignature(): void
@@ -84,7 +77,6 @@ class MigrateCommandExtension extends MigrateCommand implements SignalableComman
     {
         return [
             [self::OPTION_MUTEX, null, InputOption::VALUE_NONE, 'Run a mutually exclusive migration'],
-            [self::OPTION_DOWN, null, InputOption::VALUE_NONE, 'Enable maintenance mode during a migration']
         ];
     }
 }

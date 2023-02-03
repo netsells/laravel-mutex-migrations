@@ -8,9 +8,8 @@ use Illuminate\Events\Dispatcher;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\ServiceProvider as BaseServiceProvider;
-use Netsells\LaravelMutexMigrations\Mutex\MutexQueue;
+use Netsells\LaravelMutexMigrations\Mutex\MutexRelay;
 use Netsells\LaravelMutexMigrations\Processors\MigrationProcessorFactory;
-use Netsells\LaravelMutexMigrations\Processors\State\MaintenanceModeStateFactory;
 
 class ServiceProvider extends BaseServiceProvider implements DeferrableProvider
 {
@@ -27,14 +26,8 @@ class ServiceProvider extends BaseServiceProvider implements DeferrableProvider
 
         $this->mergeConfigFrom(__DIR__.'/../config/mutex-migrations.php', 'mutex-migrations');
 
-        $this->app->bind(MaintenanceModeStateFactory::class, function ($app) {
-            return new MaintenanceModeStateFactory(
-                Config::get('mutex-migrations.command.down')
-            );
-        });
-
-        $this->app->singleton(MutexQueue::class, function ($app) {
-            return new MutexQueue(
+        $this->app->bind(MutexRelay::class, function ($app) {
+            return new MutexRelay(
                 Cache::store(Config::get('mutex-migrations.queue.store')),
                 Config::get('mutex-migrations.queue.ttl_seconds')
             );
@@ -71,9 +64,8 @@ class ServiceProvider extends BaseServiceProvider implements DeferrableProvider
     public function provides()
     {
         return [
-            MaintenanceModeStateFactory::class,
             MigrateCommand::class,
-            MutexQueue::class,
+            MutexRelay::class,
         ];
     }
 }

@@ -2,58 +2,49 @@
 
 namespace Netsells\LaravelMutexMigrations\Mutex;
 
+use Illuminate\Contracts\Cache\Lock;
+use Illuminate\Contracts\Cache\LockProvider;
+use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Str;
 
 class MutexRelay implements MutexRelayInterface
 {
-    private string $owner;
+    public const KEY = 'laravel-mutex-migrations';
 
-    public function __construct(private readonly MutexQueue $queue)
-    {
-        $this->owner = Str::random();
+    private ?Lock $lock = null;
+
+    public function __construct(
+        private readonly Repository $cache,
+        private readonly int $ttl_seconds = 60
+    ) {
+        //
     }
 
-    public function acquireLock(array $meta = [], callable $feedback = null): bool
+    public function acquireLock(): bool
     {
         try {
-            return $this->queue->push($this->owner, $meta);
+            return $this->getLock()->block($this->ttl_seconds);
         } catch (\Throwable $th) {
             if ($this->isCacheTableNotFoundException($th)) {
                 throw new DatabaseCacheTableNotFoundException();
             }
 
             throw $th;
-        } finally {
-            // after pushing an item to the queue, we'll have a maximum of the
-            // configured TTL value - 60 seconds by default - to acquire a lock
-            // before the queued items expire
-            while (! isset($th) && ! $this->queue->isFirst($this->owner)) {
-                if (! $this->queue->contains($this->owner)) {
-                    throw new MutexRelayTimeoutException($this->owner);
-                }
-
-                if (is_callable($feedback)) {
-                    $feedback();
-                };
-
-                $wait = $this->backOff($wait ?? 1);
-            }
         }
     }
 
     public function releaseLock(): bool
     {
-        return $this->queue->pull($this->owner);
+        return $this->lock?->release() ?? false;
     }
 
-    public function hasOwnerWithMeta(array $meta): bool
+    private function getLock(): Lock
     {
-        if ($this->queue->isEmpty()) {
-            return false;
-        }
+        /** @var LockProvider $provider */
+        $provider = $this->cache->getStore();
 
-        return $this->queue->contains(fn ($item) => $item === $meta);
+        return $this->lock = $provider->lock(self::KEY . '.lock');
     }
 
     private function isCacheTableNotFoundException(\Throwable $th): bool
@@ -63,12 +54,5 @@ class MutexRelay implements MutexRelayInterface
         }
 
         return Str::contains($th->getMessage(), ['Base table or view new found', 'cache'], true);
-    }
-
-    private function backOff(int $wait): int
-    {
-        sleep($wait++);
-
-        return $wait;
     }
 }

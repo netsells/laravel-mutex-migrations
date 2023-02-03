@@ -6,5 +6,5 @@ interface MigrationProcessorInterface
 {
     public function start(): void;
 
-    public function terminate(bool $exceptionOccurred): void;
+    public function terminate(): void;
 }
