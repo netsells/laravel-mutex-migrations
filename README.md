@@ -17,7 +17,7 @@ Optionally publish the package config file:
 
 ## Usage
 
-Before a mutex migration can be run using the default `database` store, the store's `cache` table **must** already have been created by running `php artisan cache:table` followed by a standard migration - i.e. `php artisan migrate`. Once this table exists migrations can be run safely as follows:
+Before a mutex migration can be run using the default `database` store, the store's `cache_locks` table **must** already have been created by running `php artisan cache:table` followed by a standard migration - i.e. `php artisan migrate`. Once this table exists migrations can be run safely as follows:
 
 `php artisan migrate --mutex`
 

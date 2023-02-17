@@ -10,6 +10,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Filesystem\Filesystem;
 use Netsells\LaravelMutexMigrations\Mutex\DatabaseCacheTableNotFoundException;
 use Netsells\LaravelMutexMigrations\Mutex\MutexRelay;
+use Netsells\LaravelMutexMigrations\Tests\Unit\Mutex\fixtures\TestPDOException;
 use PHPUnit\Framework\TestCase;
 
 class MutexRelayTest extends TestCase
@@ -40,9 +41,11 @@ class MutexRelayTest extends TestCase
 
         $store->expects($this->once())
             ->method('lock')
-            ->willThrowException(
-                new QueryException('select * from cache', [], new \Exception('Base table or view not found'))
-            );
+            ->willThrowException(new QueryException(
+                'select * from cache_locks',
+                [],
+                new TestPDOException('Base table or view not found', '42S02')
+            ));
 
         $this->expectException(DatabaseCacheTableNotFoundException::class);
 

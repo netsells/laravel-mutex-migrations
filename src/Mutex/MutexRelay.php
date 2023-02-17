@@ -57,6 +57,6 @@ class MutexRelay implements MutexRelayInterface
             return false;
         }
 
-        return Str::contains($th->getMessage(), ['Base table or view new found', 'cache'], true);
+        return $th->getCode() === '42S02' && Str::contains($th->getMessage(), 'cache_locks');
     }
 }
