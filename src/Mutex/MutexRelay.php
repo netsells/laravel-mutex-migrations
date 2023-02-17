@@ -41,6 +41,10 @@ class MutexRelay implements MutexRelayInterface
 
     private function getLock(): Lock
     {
+        if ($this->lock) {
+            return $this->lock;
+        }
+
         /** @var LockProvider $provider */
         $provider = $this->cache->getStore();
 
