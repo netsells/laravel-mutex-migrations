@@ -16,7 +16,7 @@ class MutexRelay implements MutexRelayInterface
 
     public function __construct(
         private readonly Repository $cache,
-        private readonly int $ttl_seconds = 60
+        private readonly int $lockDurationSeconds = 60
     ) {
         //
     }
@@ -24,7 +24,7 @@ class MutexRelay implements MutexRelayInterface
     public function acquireLock(): bool
     {
         try {
-            return $this->getLock()->block($this->ttl_seconds);
+            return $this->getLock()->block($this->lockDurationSeconds);
         } catch (\Throwable $th) {
             if ($this->isCacheTableNotFoundException($th)) {
                 throw new DatabaseCacheTableNotFoundException();

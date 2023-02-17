@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'queue' => [
+    'lock' => [
         // the cache store to use to manage queued migrations; use stores that
         // are available across application instances, such as 'database', or
         // 'redis' to ensure migrations are mutually exclusive. N.B. mutually

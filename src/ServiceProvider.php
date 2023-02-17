@@ -28,8 +28,8 @@ class ServiceProvider extends BaseServiceProvider implements DeferrableProvider
 
         $this->app->bind(MutexRelay::class, function ($app) {
             return new MutexRelay(
-                Cache::store(Config::get('mutex-migrations.queue.store')),
-                Config::get('mutex-migrations.queue.ttl_seconds')
+                Cache::store(Config::get('mutex-migrations.lock.store')),
+                Config::get('mutex-migrations.lock.ttl_seconds')
             );
         });
 
