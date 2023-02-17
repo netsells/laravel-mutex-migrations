@@ -21,9 +21,11 @@ class MigrateCommandExtension extends MigrateCommand implements SignalableComman
         Dispatcher $dispatcher,
         private readonly MigrationProcessorFactory $factory
     ) {
-        $this->extendSignature();
-
         parent::__construct($migrator, $dispatcher);
+
+        foreach ($this->getAdditionalOptions() as $option) {
+            parent::addOption(...$option);
+        }
     }
 
     public function handle()
@@ -56,16 +58,6 @@ class MigrateCommandExtension extends MigrateCommand implements SignalableComman
     public function handleSignal(int $signal): void
     {
         $this->processor->terminate();
-    }
-
-    private function extendSignature(): void
-    {
-        $this->signature = join(PHP_EOL, array_merge(
-            [$this->signature],
-            array_map(function ($option) {
-                return '{--' . join(" : ", [$option[0], $option[3]]) . '}';
-            }, $this->getAdditionalOptions())
-        ));
     }
 
     /**
