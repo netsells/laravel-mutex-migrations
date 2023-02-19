@@ -7,10 +7,9 @@ use Illuminate\Database\Console\Migrations\MigrateCommand;
 use Illuminate\Database\Migrations\Migrator;
 use Netsells\LaravelMutexMigrations\Processors\MigrationProcessorFactory;
 use Netsells\LaravelMutexMigrations\Processors\MigrationProcessorInterface;
-use Symfony\Component\Console\Command\SignalableCommandInterface;
 use Symfony\Component\Console\Input\InputOption;
 
-class MutexMigrateCommand extends MigrateCommand implements SignalableCommandInterface
+class MutexMigrateCommand extends MigrateCommand
 {
     public const OPTION_MUTEX = 'mutex';
 
@@ -33,6 +32,8 @@ class MutexMigrateCommand extends MigrateCommand implements SignalableCommandInt
     {
         $this->processor = $this->createProcessor();
 
+        $this->trap([SIGINT, SIGTERM], fn () => $this->processor->terminate());
+
         try {
             $this->processor->start();
 
@@ -48,16 +49,6 @@ class MutexMigrateCommand extends MigrateCommand implements SignalableCommandInt
 
     private function createProcessor(): MigrationProcessorInterface
     {
-        return $this->factory->create($this->components, true);
-    }
-
-    public function getSubscribedSignals(): array
-    {
-        return [SIGINT, SIGTERM];
-    }
-
-    public function handleSignal(int $signal): void
-    {
-        $this->processor->terminate();
+        return $this->factory->create($this->components);
     }
 }

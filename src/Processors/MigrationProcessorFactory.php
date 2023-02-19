@@ -13,10 +13,8 @@ class MigrationProcessorFactory
         //
     }
 
-    public function create(Factory $components, bool $mutex): MigrationProcessorInterface
+    public function create(Factory $components): MigrationProcessorInterface
     {
-        return $mutex
-            ? new MutexMigrationProcessor($components, $this->relay)
-            : new StandardMigrationProcessor();
+        return new MutexMigrationProcessor($components, $this->relay);
     }
 }
