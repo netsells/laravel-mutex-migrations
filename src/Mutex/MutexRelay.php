@@ -16,7 +16,8 @@ class MutexRelay implements MutexRelayInterface
 
     public function __construct(
         private readonly Repository $cache,
-        private readonly int $lockDurationSeconds = 60
+        private readonly int $lockDurationSeconds = 60,
+        private readonly string $lockTable = 'cache_locks',
     ) {
         //
     }
@@ -57,6 +58,6 @@ class MutexRelay implements MutexRelayInterface
             return false;
         }
 
-        return $th->getCode() === '42S02' && Str::contains($th->getMessage(), 'cache_locks');
+        return $th->getCode() === '42S02' && Str::contains($th->getMessage(), $this->lockTable);
     }
 }

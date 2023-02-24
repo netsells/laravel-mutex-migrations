@@ -35,9 +35,12 @@ class ServiceProvider extends BaseServiceProvider implements DeferrableProvider
             });
 
         $this->app->bind(MutexRelay::class, function ($app) {
+            $store = Config::get('mutex-migrations.lock.store');
+
             return new MutexRelay(
-                Cache::store(Config::get('mutex-migrations.lock.store')),
-                Config::get('mutex-migrations.lock.ttl_seconds')
+                Cache::store($store),
+                Config::get('mutex-migrations.lock.ttl_seconds'),
+                Config::get("cache.stores.{$store}.lock_table", 'cache_locks'),
             );
         });
     }
