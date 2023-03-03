@@ -10,6 +10,8 @@ use Illuminate\Support\Str;
 
 class MutexRelay implements MutexRelayInterface
 {
+    public const DEFAULT_LOCK_TABLE = 'cache_locks';
+
     public const KEY = 'laravel-mutex-migrations';
 
     private ?Lock $lock = null;
@@ -17,7 +19,7 @@ class MutexRelay implements MutexRelayInterface
     public function __construct(
         private readonly Repository $cache,
         private readonly int $lockDurationSeconds = 60,
-        private readonly string $lockTable = 'cache_locks',
+        private readonly string $lockTable = self::DEFAULT_LOCK_TABLE,
     ) {
         //
     }

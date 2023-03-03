@@ -42,7 +42,7 @@ class MutexRelayTest extends TestCase
         $store->expects($this->once())
             ->method('lock')
             ->willThrowException(new QueryException(
-                'select * from cache_locks',
+                'select * from ' . MutexRelay::DEFAULT_LOCK_TABLE,
                 [],
                 new TestPDOException('Base table or view not found', '42S02')
             ));
