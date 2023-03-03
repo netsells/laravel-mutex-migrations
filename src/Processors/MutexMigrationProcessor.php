@@ -23,6 +23,8 @@ class MutexMigrationProcessor implements MigrationProcessorInterface
         try {
             if ($this->relay->acquireLock()) {
                 $this->components->info('Mutex lock acquired');
+            } else {
+                $this->components->info('A mutex lock could not be acquired');
             }
         } catch (DatabaseCacheTableNotFoundException $e) {
             // due to this particular exception we can't use the actual relay,
@@ -35,8 +37,12 @@ class MutexMigrationProcessor implements MigrationProcessorInterface
 
     public function terminate(): void
     {
-        if ($this->relay->releaseLock()) {
-            $this->components->info('Mutex lock released');
+        if (! $this->relay->releaseLock()) {
+            $this->components->info('The mutex lock was not released');
+
+            return;
         }
+
+        $this->components->info('Mutex lock released');
     }
 }
