@@ -1,6 +1,6 @@
 <?php
 
-namespace Netsells\LaravelMutexMigrations\Tests\Unit\Mutex\fixtures;
+namespace Netsells\LaravelMutexMigrations\Tests\Unit\Mutex\Fixtures;
 
 class TestPDOException extends \PDOException
 {

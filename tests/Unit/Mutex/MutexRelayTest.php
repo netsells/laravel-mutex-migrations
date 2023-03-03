@@ -10,7 +10,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Filesystem\Filesystem;
 use Netsells\LaravelMutexMigrations\Mutex\DatabaseCacheTableNotFoundException;
 use Netsells\LaravelMutexMigrations\Mutex\MutexRelay;
-use Netsells\LaravelMutexMigrations\Tests\Unit\Mutex\fixtures\TestPDOException;
+use Netsells\LaravelMutexMigrations\Tests\Unit\Mutex\Fixtures\TestPDOException;
 use PHPUnit\Framework\TestCase;
 
 class MutexRelayTest extends TestCase
