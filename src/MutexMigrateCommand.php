@@ -5,6 +5,7 @@ namespace Netsells\LaravelMutexMigrations;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\Console\Migrations\MigrateCommand;
 use Illuminate\Database\Migrations\Migrator;
+use Netsells\LaravelMutexMigrations\Mutex\DatabaseCacheTableNotFoundException;
 use Netsells\LaravelMutexMigrations\Processors\MigrationProcessorFactory;
 use Netsells\LaravelMutexMigrations\Processors\MigrationProcessorInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -38,8 +39,8 @@ class MutexMigrateCommand extends MigrateCommand
             $this->processor->start();
 
             return parent::handle();
-        } catch (\Throwable $th) {
-            $this->components->error($th->getMessage());
+        } catch (DatabaseCacheTableNotFoundException $e) {
+            $this->components->error($e->getMessage());
 
             return self::FAILURE;
         } finally {
