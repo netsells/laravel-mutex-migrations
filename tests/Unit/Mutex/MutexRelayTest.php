@@ -4,19 +4,17 @@ namespace Netsells\LaravelMutexMigrations\Tests\Unit\Mutex;
 
 use Illuminate\Cache\FileStore;
 use Illuminate\Cache\Repository;
+use Illuminate\Contracts\Cache\Lock;
+use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Database\QueryException;
 use Illuminate\Filesystem\Filesystem;
 use Netsells\LaravelMutexMigrations\Mutex\DatabaseCacheTableNotFoundException;
-use Netsells\LaravelMutexMigrations\Mutex\MutexQueue;
 use Netsells\LaravelMutexMigrations\Mutex\MutexRelay;
-use Netsells\LaravelMutexMigrations\Mutex\MutexRelayTimeoutException;
+use Netsells\LaravelMutexMigrations\Tests\Unit\Mutex\Fixtures\TestPDOException;
 use PHPUnit\Framework\TestCase;
-use Spatie\Fork\Fork;
 
 class MutexRelayTest extends TestCase
 {
-    private MutexQueue $queue;
-
     private Repository $cache;
 
     public function setUp(): void
@@ -26,10 +24,6 @@ class MutexRelayTest extends TestCase
         $this->cache = new Repository(
             new FileStore(new Filesystem(), __DIR__ . '/cache')
         );
-
-        $this->queue = new MutexQueue($this->cache);
-
-        $this->relay = new MutexRelay($this->queue);
     }
 
     protected function tearDown(): void
@@ -41,94 +35,79 @@ class MutexRelayTest extends TestCase
 
     public function testAcquireLockHandlesMissingCacheTable(): void
     {
-        /** @var \Netsells\LaravelMutexMigrations\Mutex\MutexQueue $queue */
-        $queue = $this->getMockBuilder(MutexQueue::class)
+        $store = $this->getMockBuilder(FileStore::class)
             ->disableOriginalConstructor()
             ->getMock();
 
-        $queue->expects($this->once())
-            ->method('push')
-            ->willThrowException(
-                new QueryException('select * from cache', [], new \Exception('Base table or view not found'))
-            );
+        $store->expects($this->once())
+            ->method('lock')
+            ->willThrowException(new QueryException(
+                'select * from ' . MutexRelay::DEFAULT_LOCK_TABLE,
+                [],
+                new TestPDOException('Base table or view not found', '42S02')
+            ));
 
         $this->expectException(DatabaseCacheTableNotFoundException::class);
 
-        (new MutexRelay($queue))->acquireLock();
+        /** @var \Illuminate\Contracts\Cache\Store $store */
+        (new MutexRelay(new Repository($store)))->acquireLock();
     }
 
     public function testAcquireLockHandlesUnexpectedExceptions(): void
     {
-        /** @var \Netsells\LaravelMutexMigrations\Mutex\MutexQueue $queue */
-        $queue = $this->getMockBuilder(MutexQueue::class)
+        $lock = $this->getMockBuilder(Lock::class)
+            ->getMock();
+
+        $lock->expects($this->once())
+            ->method('block')
+            ->willThrowException(new \Exception());
+
+        $store = $this->getMockBuilder(FileStore::class)
             ->disableOriginalConstructor()
             ->getMock();
 
-        $queue->expects($this->once())
-            ->method('push')
-            ->willThrowException(new \Exception());
+        $store->expects($this->once())
+            ->method('lock')
+            ->willReturn($lock);
 
         $this->expectException(\Exception::class);
 
-        (new MutexRelay($queue))->acquireLock();
+        /** @var \Illuminate\Contracts\Cache\Store $store */
+        (new MutexRelay(new Repository($store)))->acquireLock();
     }
 
-    public function testAcquireLockThrowsExceptionOnTimeout(): void
+    public function testAcquireLockThrowsLockTimeoutException(): void
     {
-        $relay = new MutexRelay(new MutexQueue($this->cache, -1));
+        $relay = new MutexRelay($this->cache, -1);
 
-        $this->expectException(MutexRelayTimeoutException::class);
+        $this->assertTrue($relay->acquireLock());
+
+        $this->expectException(LockTimeoutException::class);
 
         $relay->acquireLock();
     }
 
-    public function testAcquireLockIsAcquiredOnce(): void
+    public function testReleaseLockHandlesUnacquiredLock(): void
     {
-        $this->assertTrue($this->relay->acquireLock());
-        $this->assertFalse($this->relay->acquireLock());
+        $relay = new MutexRelay($this->cache);
+
+        $this->assertFalse($relay->releaseLock());
     }
 
     public function testReleaseLockUnblocksOtherRelays(): void
     {
-        $queue = new MutexQueue($this->cache, 1);
-
-        $relay1 = new MutexRelay($queue);
-        $relay2 = new MutexRelay($queue);
+        $relay1 = new MutexRelay($this->cache, 1);
+        $relay2 = new MutexRelay($this->cache, 1);
 
         $this->assertTrue($relay1->acquireLock());
 
         // exception occurs since the lock isn't released before the initial
         // acquire attempt expires
-        $this->expectException(MutexRelayTimeoutException::class);
+        $this->expectException(LockTimeoutException::class);
         $relay2->acquireLock();
 
         $this->assertTrue($relay1->releaseLock());
 
         $this->assertTrue($relay2->acquireLock());
-    }
-
-    public function testAcquireAndReleaseHandleConcurrentCalls(): void
-    {
-        $relay1 = new MutexRelay($this->queue);
-        $relay2 = new MutexRelay($this->queue);
-
-        [$result1, $result2] = Fork::new()->run(
-            fn () => [$relay1->acquireLock(), $relay1->releaseLock()],
-            fn () => [$relay2->acquireLock(), $relay2->releaseLock()],
-        );
-
-        $this->assertSame([true, true], $result1);
-        $this->assertSame([true, true], $result2);
-    }
-
-    public function testHasOwnerWithMeta(): void
-    {
-        $this->assertFalse($this->relay->hasOwnerWithMeta(['foo' => 'bar']));
-
-        $this->relay->acquireLock(['foo' => 'bar']);
-
-        $this->assertFalse($this->relay->hasOwnerWithMeta(['foo' => 'baz']));
-
-        $this->assertTrue($this->relay->hasOwnerWithMeta(['foo' => 'bar']));
     }
 }

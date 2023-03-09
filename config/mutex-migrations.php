@@ -1,36 +1,7 @@
 <?php
 
 return [
-    'command' => [
-
-        // configuration for running migrations in maintenance mode
-        'down' => [
-            // options for the artisan down command called during a down
-            // migration @see \Illuminate\Foundation\Console\DownCommand
-            'options' => [
-                // The path that users should be redirected to
-                '--redirect' => null,
-                // The view that should be pre-rendered for display during
-                // maintenance mode
-                '--render' => null,
-                // The number of seconds after which the request may be retried
-                '--retry' => null,
-                // The number of seconds after which the browser may refresh
-                '--refresh' => null,
-                // The secret phrase that may be used to bypass maintenance mode
-                '--secret' => null,
-                // The status code that should be used when returning the
-                // maintenance mode response
-                '--status' => null,
-            ],
-
-            // preserves maintenance mode after an exception during a down
-            // migration
-            'sticky' => true,
-        ],
-    ],
-
-    'queue' => [
+    'lock' => [
         // the cache store to use to manage queued migrations; use stores that
         // are available across application instances, such as 'database', or
         // 'redis' to ensure migrations are mutually exclusive. N.B. mutually
