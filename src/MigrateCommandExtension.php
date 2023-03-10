@@ -6,6 +6,7 @@ use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\Console\Migrations\MigrateCommand;
 use Illuminate\Database\Migrations\Migrator;
 use Illuminate\Support\Collection;
+use Netsells\LaravelMutexMigrations\Mutex\DatabaseCacheTableNotFoundException;
 
 class MigrateCommandExtension extends MigrateCommand
 {
@@ -19,7 +20,11 @@ class MigrateCommandExtension extends MigrateCommand
     public function handle(): int
     {
         if ($this->option(MutexMigrateCommand::OPTION_MUTEX)) {
-            return $this->call(MutexMigrateCommand::class, $this->getCommandOptions());
+            try {
+                return $this->call(MutexMigrateCommand::class, $this->getCommandOptions());
+            } catch (DatabaseCacheTableNotFoundException $e) {
+                $this->components->warn('Falling back to a standard migration');
+            }
         }
 
         return parent::handle();

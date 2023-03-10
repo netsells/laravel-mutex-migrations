@@ -37,6 +37,10 @@ class MutexMigrationProcessor implements MigrationProcessorInterface
 
     public function terminate(): void
     {
+        if ($this->relay instanceof NullRelay) {
+            return;
+        }
+
         if (! $this->relay->releaseLock()) {
             $this->components->info('The mutex lock was not released');
 
