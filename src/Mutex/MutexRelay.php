@@ -3,7 +3,6 @@
 namespace Netsells\LaravelMutexMigrations\Mutex;
 
 use Illuminate\Contracts\Cache\Lock;
-use Illuminate\Contracts\Cache\LockProvider;
 use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Str;
@@ -48,10 +47,10 @@ class MutexRelay implements MutexRelayInterface
             return $this->lock;
         }
 
-        /** @var LockProvider $provider */
-        $provider = $this->cache->getStore();
+        /** @var \Illuminate\Contracts\Cache\LockProvider $store */
+        $store = $this->cache->getStore();
 
-        return $this->lock = $provider->lock(self::KEY . '.lock');
+        return $this->lock = $store->lock(self::KEY . '.lock');
     }
 
     private function isCacheTableNotFoundException(\Throwable $th): bool
