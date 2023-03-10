@@ -42,7 +42,7 @@ class MutexMigrateCommand extends MigrateCommand
         } catch (DatabaseCacheTableNotFoundException $e) {
             $this->components->error($e->getMessage());
 
-            return self::FAILURE;
+            throw $e;
         } finally {
             $this->processor->terminate();
         }
