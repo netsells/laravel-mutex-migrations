@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 use Illuminate\Contracts\Console\Kernel;
 use Spatie\Fork\Fork;
 
-class CommandConcurrencyTest extends AbstractIntegrationTest
+class CommandConcurrencyTest extends AbstractIntegrationTestCase
 {
     public function testCommandCanBeCalledConcurrently(): void
     {
