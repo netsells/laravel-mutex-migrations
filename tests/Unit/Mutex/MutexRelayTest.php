@@ -8,6 +8,7 @@ use Illuminate\Contracts\Cache\Lock;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Database\QueryException;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Foundation\Application;
 use Netsells\LaravelMutexMigrations\Mutex\DatabaseCacheTableNotFoundException;
 use Netsells\LaravelMutexMigrations\Mutex\MutexRelay;
 use Netsells\LaravelMutexMigrations\Tests\Unit\Mutex\Fixtures\TestPDOException;
@@ -41,11 +42,7 @@ class MutexRelayTest extends TestCase
 
         $store->expects($this->once())
             ->method('lock')
-            ->willThrowException(new QueryException(
-                'select * from ' . MutexRelay::DEFAULT_LOCK_TABLE,
-                [],
-                new TestPDOException('Base table or view not found', '42S02')
-            ));
+            ->willThrowException($this->getQueryException());
 
         $this->expectException(DatabaseCacheTableNotFoundException::class);
 
@@ -109,5 +106,20 @@ class MutexRelayTest extends TestCase
         $this->assertTrue($relay1->releaseLock());
 
         $this->assertTrue($relay2->acquireLock());
+    }
+
+    private function getQueryException(): QueryException
+    {
+        $arguments = [
+            'select * from ' . MutexRelay::DEFAULT_LOCK_TABLE,
+            [],
+            new TestPDOException('Base table or view not found', '42S02')
+        ];
+
+        if (version_compare(Application::VERSION, '10.0.0', '>=')) {
+            array_unshift($arguments, 'test-connection');
+        }
+
+        return new QueryException(...$arguments);
     }
 }
