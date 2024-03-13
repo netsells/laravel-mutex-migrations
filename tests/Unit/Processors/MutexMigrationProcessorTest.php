@@ -21,7 +21,6 @@ class MutexMigrationProcessorTest extends TestCase
 
         $this->components = $this->getMockBuilder(Factory::class)
             ->disableOriginalConstructor()
-            ->addMethods(['info', 'warn'])
             ->getMock();
 
         $this->relay = $this->getMockBuilder(MutexRelay::class)
@@ -31,18 +30,18 @@ class MutexMigrationProcessorTest extends TestCase
 
     public function testStart(): void
     {
-        $this->components->expects($this->exactly(2))->method('info');
+        $this->components->expects($this->exactly(2))->method('__call');
 
         $this->relay->expects($this->once())
             ->method('acquireLock')
-            ->will($this->returnValue(true));
+            ->willReturn(true);
 
         $this->getProcessorInstance()->start();
     }
 
     public function testStartThrowsSpecificException(): void
     {
-        $this->components->expects($this->once())->method('info');
+        $this->components->expects($this->once())->method('__call');
 
         $this->relay->expects($this->once())
             ->method('acquireLock')
@@ -55,11 +54,11 @@ class MutexMigrationProcessorTest extends TestCase
 
     public function testTerminate(): void
     {
-        $this->components->expects($this->once())->method('info');
+        $this->components->expects($this->once())->method('__call');
 
         $this->relay->expects($this->once())
             ->method('releaseLock')
-            ->will($this->returnValue(true));
+            ->willReturn(true);
 
         $this->getProcessorInstance()->terminate();
     }
