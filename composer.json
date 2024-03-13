@@ -20,11 +20,14 @@
         }
     ],
     "require": {
-        "php": "^8.1",
-        "laravel/framework": "^9.3 || ^10.0"
+        "php": "^8.2",
+        "illuminate/contracts": "^10.0|^11.0",
+        "illuminate/console": "^10.0|^11.0",
+        "illuminate/database": "^10.0|^11.0",
+        "illuminate/support": "^10.0|^11.0"
     },
     "require-dev": {
-        "orchestra/testbench": "^7.7 || ^8.0",
+        "orchestra/testbench": "^8.0|^9.0",
         "spatie/fork": "^1.1"
     },
     "autoload": {
