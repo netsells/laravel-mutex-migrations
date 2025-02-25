@@ -63,6 +63,9 @@ class MutexRelay implements MutexRelayInterface
             return false;
         }
 
-        return $th->getCode() === '42S02' && Str::contains($th->getMessage(), $this->lockTable);
+        return Str::contains($th->getMessage(), $this->lockTable) && \in_array($th->getCode(), [
+            '42S02', // mysql
+            'HY000', // sqlite
+        ], true);
     }
 }

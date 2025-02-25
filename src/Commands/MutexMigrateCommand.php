@@ -16,11 +16,18 @@ class MutexMigrateCommand extends MigrateCommand
 {
     public const OPTION_MUTEX = 'mutex';
 
+    public const OPTION_MUTEX_GRACEFUL = 'mutex-graceful';
+
     private MigrationProcessorInterface $processor;
 
     public static function getMutexOption(): array
     {
         return [self::OPTION_MUTEX, null, InputOption::VALUE_NONE, 'Run a mutually exclusive migration'];
+    }
+
+    public static function getMutexGracefulOption(): array
+    {
+        return [self::OPTION_MUTEX_GRACEFUL, null, InputOption::VALUE_NONE, 'Run a mutually exclusive migration and gracefully failover to a standard migration if the application does not contain the required lock table'];
     }
 
     public function __construct(
