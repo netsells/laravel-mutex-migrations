@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Netsells\LaravelMutexMigrations\Mutex;
 
 use Illuminate\Contracts\Cache\Lock;
@@ -11,13 +13,15 @@ class MutexRelay implements MutexRelayInterface
 {
     public const DEFAULT_LOCK_TABLE = 'cache_locks';
 
+    public const DEFAULT_TTL_SECONDS = 60;
+
     public const KEY = 'laravel-mutex-migrations';
 
     private ?Lock $lock = null;
 
     public function __construct(
         private readonly Repository $cache,
-        private readonly int $lockDurationSeconds = 60,
+        private readonly int $lockDurationSeconds = self::DEFAULT_TTL_SECONDS,
         private readonly string $lockTable = self::DEFAULT_LOCK_TABLE,
     ) {
         //

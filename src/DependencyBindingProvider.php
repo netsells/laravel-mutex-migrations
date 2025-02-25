@@ -47,8 +47,10 @@ class DependencyBindingProvider extends BaseServiceProvider implements Deferrabl
 
             return new Mutex\MutexRelay(
                 cache: Cache::store($store),
-                lockDurationSeconds: Config::get('mutex-migrations.lock.ttl_seconds'),
-                lockTable: Config::get("cache.stores.{$store}.lock_table", Mutex\MutexRelay::DEFAULT_LOCK_TABLE),
+                lockDurationSeconds: Config::get('mutex-migrations.lock.ttl_seconds')
+                    ?? Mutex\MutexRelay::DEFAULT_TTL_SECONDS,
+                lockTable: Config::get("cache.stores.{$store}.lock_table")
+                    ?? Mutex\MutexRelay::DEFAULT_LOCK_TABLE,
             );
         });
     }
