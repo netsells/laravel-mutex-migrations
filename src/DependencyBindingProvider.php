@@ -10,8 +10,8 @@ use Illuminate\Database\Migrations\Migrator;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\ServiceProvider as BaseServiceProvider;
-use Netsells\LaravelMutexMigrations\MigrateCommandExtension;
-use Netsells\LaravelMutexMigrations\Mutex\MutexRelay;
+use Netsells\LaravelMutexMigrations\Commands;
+use Netsells\LaravelMutexMigrations\Mutex;
 
 class DependencyBindingProvider extends BaseServiceProvider implements DeferrableProvider
 {
@@ -24,8 +24,8 @@ class DependencyBindingProvider extends BaseServiceProvider implements Deferrabl
     {
         return [
             MigrateCommand::class,
-            MutexMigrateCommand::class,
-            MutexRelay::class,
+            Commands\MutexMigrateCommand::class,
+            Mutex\MutexRelay::class,
         ];
     }
 
@@ -34,21 +34,21 @@ class DependencyBindingProvider extends BaseServiceProvider implements Deferrabl
      */
     public function register(): void
     {
-        $this->app->bind(MigrateCommand::class, MigrateCommandExtension::class);
+        $this->app->bind(MigrateCommand::class, Commands\MigrateCommandExtension::class);
 
-        $this->app->when([MigrateCommandExtension::class, MutexMigrateCommand::class])
+        $this->app->when([Commands\MigrateCommandExtension::class, Commands\MutexMigrateCommand::class])
             ->needs(Migrator::class)
             ->give(function ($app) {
                 return $app['migrator'];
             });
 
-        $this->app->bind(MutexRelay::class, function ($app) {
+        $this->app->bind(Mutex\MutexRelay::class, function ($app) {
             $store = Config::get('mutex-migrations.lock.store');
 
-            return new MutexRelay(
+            return new Mutex\MutexRelay(
                 cache: Cache::store($store),
                 lockDurationSeconds: Config::get('mutex-migrations.lock.ttl_seconds'),
-                lockTable: Config::get("cache.stores.{$store}.lock_table", MutexRelay::DEFAULT_LOCK_TABLE),
+                lockTable: Config::get("cache.stores.{$store}.lock_table", Mutex\MutexRelay::DEFAULT_LOCK_TABLE),
             );
         });
     }

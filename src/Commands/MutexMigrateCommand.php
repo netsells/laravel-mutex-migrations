@@ -1,6 +1,8 @@
 <?php
 
-namespace Netsells\LaravelMutexMigrations;
+declare(strict_types=1);
+
+namespace Netsells\LaravelMutexMigrations\Commands;
 
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\Console\Migrations\MigrateCommand;
