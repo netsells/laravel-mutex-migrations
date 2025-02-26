@@ -27,13 +27,7 @@ class MigrateCommandExtension extends MigrateCommand
                 return $this->call(MutexMigrateCommand::class, $this->getCommandOptions());
             } catch (DatabaseCacheTableNotFoundException $e) {
                 if ($this->option(MutexMigrateCommand::OPTION_MUTEX)) {
-                    if ($this->option('graceful')) {
-                        $this->components->warn($e->getMessage());
-
-                        return self::SUCCESS;
-                    }
-
-                    return self::FAILURE;
+                    return $this->options('graceful') ? self::SUCCESS : self::FAILURE;
                 } elseif ($this->option(MutexMigrateCommand::OPTION_MUTEX_GRACEFUL)) {
                     $this->components->warn('Falling back to a standard migration');
                 }
