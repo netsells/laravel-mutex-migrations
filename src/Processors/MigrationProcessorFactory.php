@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Netsells\LaravelMutexMigrations\Processors;
 
 use Illuminate\Console\View\Components\Factory;

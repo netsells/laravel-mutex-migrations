@@ -1,6 +1,8 @@
 <?php
 
-namespace Netsells\LaravelMutexMigrations;
+declare(strict_types=1);
+
+namespace Netsells\LaravelMutexMigrations\Commands;
 
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\Console\Migrations\MigrateCommand;
@@ -15,25 +17,39 @@ class MigrateCommandExtension extends MigrateCommand
         parent::__construct($migrator, $dispatcher);
 
         parent::addOption(...MutexMigrateCommand::getMutexOption());
+        parent::addOption(...MutexMigrateCommand::getMutexGracefulOption());
     }
 
     public function handle(): int
     {
-        if ($this->option(MutexMigrateCommand::OPTION_MUTEX)) {
+        if ($this->shouldUseMutex()) {
             try {
                 return $this->call(MutexMigrateCommand::class, $this->getCommandOptions());
             } catch (DatabaseCacheTableNotFoundException $e) {
-                $this->components->warn('Falling back to a standard migration');
+                if ($this->option(MutexMigrateCommand::OPTION_MUTEX)) {
+                    return $this->options('graceful') ? self::SUCCESS : self::FAILURE;
+                } elseif ($this->option(MutexMigrateCommand::OPTION_MUTEX_GRACEFUL)) {
+                    $this->components->warn('Falling back to a standard migration');
+                }
             }
         }
 
         return parent::handle();
     }
 
+    private function shouldUseMutex(): bool
+    {
+        return $this->option(MutexMigrateCommand::OPTION_MUTEX)
+            || $this->option(MutexMigrateCommand::OPTION_MUTEX_GRACEFUL);
+    }
+
     private function getCommandOptions(): array
     {
         return Collection::make($this->options())
-            ->reject(fn ($value, $key) => $key === MutexMigrateCommand::OPTION_MUTEX)
+            ->reject(fn ($value, $key) => \in_array($key, [
+                MutexMigrateCommand::OPTION_MUTEX,
+                MutexMigrateCommand::OPTION_MUTEX_GRACEFUL,
+            ]))
             ->mapWithKeys(fn ($value, $key) => ["--$key" => $value])
             ->all();
     }
